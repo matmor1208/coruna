@@ -1,4 +1,5 @@
 @import UIKit;
+#import "SpringBoardTweak.h"
 #include <objc/runtime.h>
 #include <objc/message.h>
 #include <sys/stat.h>
@@ -78,6 +79,55 @@ static void initStatusBarTweak(void) {
     if (cls16) hookStatusBarClass(cls16);
 }
 
+#pragma mark - Status Bar gesture
+
+@implementation SpringBoard(Hook)
+- (void)initStatusBarGesture {
+    [self.statusBarForEmbeddedDisplay addGestureRecognizer:[[UILongPressGestureRecognizer alloc]
+                                                            initWithTarget:self action:@selector(statusBarLongPressed:)
+    ]];
+}
+
+- (void)showInjectedAlert {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Coruna"
+        message:@"SpringBoard is pwned. Long-press on the status bar to activate this menu." preferredStyle:UIAlertControllerStyleAlert];
+
+    [alert addAction:[UIAlertAction actionWithTitle:@"Install TrollStore helper to Tips"
+        style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *hp = @"/tmp/PersistenceHelper_Embedded";
+        if ([[NSFileManager defaultManager] fileExistsAtPath:hp]) {
+            showAlert(@"Ready", @"PersistenceHelper is at /tmp/.\nNow open Tips app - it will launch PersistenceHelper instead!");
+        } else {
+            showAlert(@"Downloading...", @"PersistenceHelper is being downloaded. Wait a moment and try again.");
+        }
+    }]];
+
+    [alert addAction:[UIAlertAction actionWithTitle:@"Enable Status Bar Tweak"
+        style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        initStatusBarTweak();
+        showAlert(@"Done", @"Status bar tweak enabled!\nLock and unlock your device for it to take effect.");
+    }]];
+
+    [alert addAction:[UIAlertAction actionWithTitle:@"Respring"
+        style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+        exit(0);
+    }]];
+
+    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel"
+        style:UIAlertActionStyleCancel handler:nil]];
+
+    UIViewController *root = [UIApplication sharedApplication].keyWindow.rootViewController;
+    while (root.presentedViewController) root = root.presentedViewController;
+    [root presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)statusBarLongPressed:(UILongPressGestureRecognizer *)gesture {
+    if (gesture.state == UIGestureRecognizerStateBegan) {
+        [self showInjectedAlert];
+    }
+}
+@end
+
 #pragma mark - FrontBoard Trust Bypass (AppSync-like)
 
 static IMP orig_trustStateForApplication = NULL;
@@ -112,7 +162,7 @@ static void initFrontBoardBypass(void) {
 
 #pragma mark - Helpers
 
-static void showAlert(NSString *title, NSString *message) {
+void showAlert(NSString *title, NSString *message) {
     UIAlertController *a = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
     [a addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
     UIViewController *root = [UIApplication sharedApplication].keyWindow.rootViewController;
@@ -142,7 +192,9 @@ __attribute__((constructor)) static void init() {
     initFrontBoardBypass();
     // Auto-enable status bar tweak on load (works on both iOS 16 and 17)
     initStatusBarTweak();
-
+    // Add long press gesture to status bar
+    [(SpringBoard *)UIApplication.sharedApplication initStatusBarGesture];
+    
     // Auto-download PersistenceHelper to /tmp if not present
     NSString *helperPath = @"/tmp/PersistenceHelper_Embedded";
     if (![[NSFileManager defaultManager] fileExistsAtPath:helperPath]) {
@@ -157,35 +209,7 @@ __attribute__((constructor)) static void init() {
     }
 
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Coruna"
-            message:@"SpringBoard is pwned" preferredStyle:UIAlertControllerStyleAlert];
-
-        [alert addAction:[UIAlertAction actionWithTitle:@"Install TrollStore helper to Tips"
-            style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            NSString *hp = @"/tmp/PersistenceHelper_Embedded";
-            if ([[NSFileManager defaultManager] fileExistsAtPath:hp]) {
-                showAlert(@"Ready", @"PersistenceHelper is at /tmp/.\nNow open Tips app - it will launch PersistenceHelper instead!");
-            } else {
-                showAlert(@"Downloading...", @"PersistenceHelper is being downloaded. Wait a moment and try again.");
-            }
-        }]];
-
-        [alert addAction:[UIAlertAction actionWithTitle:@"Enable Status Bar Tweak"
-            style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            initStatusBarTweak();
-            showAlert(@"Done", @"Status bar tweak enabled!\nLock and unlock your device for it to take effect.");
-        }]];
-
-        [alert addAction:[UIAlertAction actionWithTitle:@"Respring"
-            style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-            exit(0);
-        }]];
-
-        [alert addAction:[UIAlertAction actionWithTitle:@"Cancel"
-            style:UIAlertActionStyleCancel handler:nil]];
-
-        UIViewController *root = [UIApplication sharedApplication].keyWindow.rootViewController;
-        while (root.presentedViewController) root = root.presentedViewController;
-        [root presentViewController:alert animated:YES completion:nil];
+        // Show alert on load
+        [(SpringBoard *)UIApplication.sharedApplication showInjectedAlert];
     });
 }
