@@ -9,7 +9,8 @@ include $(THEOS)/makefiles/common.mk
 LIBRARY_NAME = SpringBoardTweak
 
 SpringBoardTweak_FILES = SpringBoardTweak.m
-SpringBoardTweak_CFLAGS = -fno-objc-arc
+SpringBoardTweak_CFLAGS = -fobjc-arc
+SpringBoardTweak_LDFLAGS = -undefined dynamic_lookup
 SpringBoardTweak_INSTALL_PATH = /usr/local/lib
 
 include $(THEOS_MAKE_PATH)/library.mk

