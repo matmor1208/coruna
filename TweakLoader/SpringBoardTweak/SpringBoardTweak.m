@@ -11,6 +11,17 @@
 
 #pragma mark - Status Bar Clock Tweak
 
+static NSString *g_timeFormat = nil;
+static NSString *g_dateFormat = nil;
+
+static NSString *getTimeFormat(void) {
+    return g_timeFormat ?: @"HH:mm";
+}
+
+static NSString *getDateFormat(void) {
+    return g_dateFormat ?: @"E dd/MM/yyyy";
+}
+
 static void (*orig_applyStyleAttributes)(id self, SEL _cmd, id arg1);
 static void (*orig_setText)(id self, SEL _cmd, NSString *text);
 
@@ -27,26 +38,34 @@ static void hook_setText(id self, SEL _cmd, NSString *text) {
         @autoreleasepool {
             NSMutableAttributedString *finalString = [[NSMutableAttributedString alloc] init];
 
+            NSString *timeFmt = getTimeFormat();
+            NSString *dateFmt = getDateFormat();
+
             NSDateFormatter *formatter1 = [[NSDateFormatter alloc] init];
-            [formatter1 setDateFormat:@"HH:mm"];
+            [formatter1 setDateFormat:timeFmt];
             UIFont *font1 = [UIFont systemFontOfSize:15.0 weight:UIFontWeightSemibold];
             NSAttributedString *attrString1 = [[NSAttributedString alloc] initWithString:[formatter1 stringFromDate:[NSDate date]]
                                                                               attributes:@{NSFontAttributeName: font1}];
 
-            NSLocale *currentLocale = [NSLocale autoupdatingCurrentLocale];
-            NSDateFormatter *formatter2 = [[NSDateFormatter alloc] init];
-            [formatter2 setDateFormat:@"E dd/MM/yyyy"];
-            [formatter2 setLocale:currentLocale];
-            UIFont *font2 = [UIFont systemFontOfSize:8.0 weight:UIFontWeightRegular];
-            NSAttributedString *attrString2 = [[NSAttributedString alloc] initWithString:[formatter2 stringFromDate:[NSDate date]]
-                                                                              attributes:@{NSFontAttributeName: font2}];
-
             [finalString appendAttributedString:attrString1];
-            [finalString appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
-            [finalString appendAttributedString:attrString2];
+
+            if (dateFmt.length > 0) {
+                NSLocale *currentLocale = [NSLocale autoupdatingCurrentLocale];
+                NSDateFormatter *formatter2 = [[NSDateFormatter alloc] init];
+                [formatter2 setDateFormat:dateFmt];
+                [formatter2 setLocale:currentLocale];
+                UIFont *font2 = [UIFont systemFontOfSize:8.0 weight:UIFontWeightRegular];
+                NSAttributedString *attrString2 = [[NSAttributedString alloc] initWithString:[formatter2 stringFromDate:[NSDate date]]
+                                                                                  attributes:@{NSFontAttributeName: font2}];
+
+                [finalString appendAttributedString:[[NSAttributedString alloc] initWithString:@"\n"]];
+                [finalString appendAttributedString:attrString2];
+                label.numberOfLines = 2;
+            } else {
+                label.numberOfLines = 1;
+            }
 
             label.textAlignment = NSTextAlignmentCenter;
-            label.numberOfLines = 2;
             label.attributedText = finalString;
         }
     } else {
@@ -106,10 +125,9 @@ static void initStatusBarTweak(void) {
         }
     }]];
 
-    [alert addAction:[UIAlertAction actionWithTitle:@"Enable Status Bar Tweak"
+    [alert addAction:[UIAlertAction actionWithTitle:@"Status Bar Settings"
         style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        initStatusBarTweak();
-        showAlert(@"Done", @"Status bar tweak enabled!\nLock and unlock your device for it to take effect.");
+        [self showStatusBarSettings];
     }]];
 
     [alert addAction:[UIAlertAction actionWithTitle:@"Load .dylib tweak"
@@ -143,6 +161,66 @@ static void initStatusBarTweak(void) {
 
     [SpringBoard.viewControllerToPresent presentViewController:alert animated:YES completion:nil];
 }
+- (void)showStatusBarSettings {
+    UIAlertController *settings = [UIAlertController alertControllerWithTitle:@"Status Bar Settings"
+        message:@"Set time and date format.\nExamples:\n  Time: HH:mm  HH:mm:ss  h:mm a\n  Date: E dd/MM/yyyy  EE d/M/yy\n\nLeave date empty to show time only."
+        preferredStyle:UIAlertControllerStyleAlert];
+
+    [settings addTextFieldWithConfigurationHandler:^(UITextField *tf) {
+        tf.placeholder = @"Time format (e.g. HH:mm)";
+        tf.text = getTimeFormat();
+        tf.clearButtonMode = UITextFieldViewModeWhileEditing;
+    }];
+
+    [settings addTextFieldWithConfigurationHandler:^(UITextField *tf) {
+        tf.placeholder = @"Date format (e.g. E dd/MM/yyyy)";
+        tf.text = getDateFormat();
+        tf.clearButtonMode = UITextFieldViewModeWhileEditing;
+    }];
+
+    [settings addAction:[UIAlertAction actionWithTitle:@"Apply" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *timeFmt = settings.textFields[0].text;
+        NSString *dateFmt = settings.textFields[1].text;
+
+        if (timeFmt.length == 0) timeFmt = @"HH:mm";
+
+        // Validate formats by trying them
+        NSDateFormatter *testFmt = [[NSDateFormatter alloc] init];
+        [testFmt setDateFormat:timeFmt];
+        NSString *testResult = [testFmt stringFromDate:[NSDate date]];
+        if (!testResult || testResult.length == 0) {
+            showAlert(@"Error", [NSString stringWithFormat:@"Invalid time format: %@", timeFmt]);
+            return;
+        }
+        if (dateFmt.length > 0) {
+            [testFmt setDateFormat:dateFmt];
+            testResult = [testFmt stringFromDate:[NSDate date]];
+            if (!testResult || testResult.length == 0) {
+                showAlert(@"Error", [NSString stringWithFormat:@"Invalid date format: %@", dateFmt]);
+                return;
+            }
+        }
+
+        g_timeFormat = [timeFmt copy];
+        g_dateFormat = [dateFmt copy];
+
+        initStatusBarTweak();
+        showAlert(@"Applied", [NSString stringWithFormat:@"Time: %@\nDate: %@\nLock and unlock for changes to take effect.",
+            g_timeFormat, g_dateFormat.length > 0 ? g_dateFormat : @"(none)"]);
+    }]];
+
+    [settings addAction:[UIAlertAction actionWithTitle:@"Default" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        g_timeFormat = nil;
+        g_dateFormat = nil;
+        initStatusBarTweak();
+        showAlert(@"Reset", @"Status bar reset to default (HH:mm / E dd/MM/yyyy).\nLock and unlock for changes to take effect.");
+    }]];
+
+    [settings addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+
+    [SpringBoard.viewControllerToPresent presentViewController:settings animated:YES completion:nil];
+}
+
 // Document picker delegate
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     if (urls.count <= 0) return;
