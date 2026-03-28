@@ -26,15 +26,26 @@ if (typeof platformModule === 'undefined') {
 }
 
 // 3. Define the "Destructuring" targets manually to prevent the crash
-var P = platformModule;
-var x = globalThis.moduleManager.getModuleByName("57620206d62079baad0e57e6d9ec93120c0f5247") || {};
+// 3. AUTO-DISCOVERY: Find the helper module by its content, not its hash
+var x = {};
+var G = {}, W = {}, C = {}, m = {}, j = function(t){return BigInt(t)};
 
-// These aliases prevent the "Right side cannot be destructured" error
-var G = x.N || {}; 
-var W = x.tn || {}; 
-var C = x.nn || {};
-var m = x.Vt || {};
-var j = x.U || function(t){return BigInt(t)}; // Essential for address math
+// We look for any module that contains the 'Vt' property (usually the address math table)
+const allModules = globalThis.moduleManager.getModules ? globalThis.moduleManager.getModules() : [];
+const helperModule = allModules.find(mod => mod && mod.Vt) || 
+                     globalThis.moduleManager.getModuleByName("e9f898587620186e31119fbf32660f26c1e048e0"); // Fallback to your closest hash
+
+if (helperModule) {
+    x = helperModule;
+    G = x.N || {}; 
+    W = x.tn || {}; 
+    C = x.nn || {};
+    m = x.Vt || {};
+    if (x.U) j = x.U;
+    console.log("[CORUNA] Successfully linked helper module.");
+} else {
+    console.error("[CORUNA] Critical Failure: No compatible offset module found in repo.");
+}
 
 
 let r = {};
