@@ -1,20 +1,24 @@
 // Variant A for iOS 17.2 is untested, might not work
-// 1. Translation Layer (The "Rosetta Stone")
+// 1. Translation Layer & Safety Shim
 globalThis.obChTK = globalThis.moduleManager;
 globalThis.moduleManager.fgPoij = globalThis.moduleManager.evalBase64Module;
 globalThis.moduleManager.hPL3On = globalThis.moduleManager.evalCode;
 
 // 2. The "Safe" Module Loader
-// We check if it's already defined to avoid the "Redeclaration" error
 if (typeof platformModule === 'undefined') {
-    var platformModule = globalThis.moduleManager.getModuleByName(([88, 93, 95, 95, 80, 10, 8, 90, 11, 88, 92, 88, 80, 11, 8, 91, 8, 81, 15, 93, 89, 11, 12, 91, 81, 94, 15, 95, 93, 95, 13, 93, 13, 94, 92, 80, 90, 12, 11, 89].map(x => {
-        return String.fromCharCode(x ^ 105);
-    }).join("")));
+    var platformModule = globalThis.moduleManager.getModuleByName(([88, 93, 95, 95, 80, 10, 8, 90, 11, 88, 92, 88, 80, 11, 8, 91, 8, 81, 15, 93, 89, 11, 12, 91, 81, 94, 15, 95, 93, 95, 13, 93, 13, 94, 92, 80, 90, 12, 11, 89].map(x => String.fromCharCode(x ^ 105)).join("")));
 }
 
-// 3. Alias the short-names the script loves to use
+// 3. Define the "Destructuring" targets manually to prevent the crash
 var P = platformModule;
-var x = globalThis.moduleManager.getModuleByName("57620206d62079baad0e57e6d9ec93120c0f5247");
+var x = globalThis.moduleManager.getModuleByName("57620206d62079baad0e57e6d9ec93120c0f5247") || {};
+
+// These aliases prevent the "Right side cannot be destructured" error
+var G = x.N || {}; 
+var W = x.tn || {}; 
+var C = x.nn || {};
+var m = x.Vt || {};
+var j = x.U || function(t){return BigInt(t)}; // Essential for address math
 
 
 let r = {};
