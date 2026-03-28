@@ -26,48 +26,68 @@ if (typeof platformModule === 'undefined') {
 }
 
 // 3. Define the "Destructuring" targets manually to prevent the crash
-// 3. FORCED MODULE SCANNER
+// 3. MASTER BRUTE-FORCE SCANNER
 var x = {};
 var G = {}, W = {}, C = {}, m = {}, j = function(t){return BigInt(t)};
 
 (async function() {
-    // List of all decrypted hashes you found in your repo
-    const targetHashes = [
-        "e9f898587620186e31119fbf32660f26c1e048e0",
+    // Every hash you found in your 'downloaded' folder
+    const allHashes = [
         "1334417664270db20af705f422878c53c8378203",
-        "57620206d62079baad0e57e6d9ec93120c0f5247",
-        "14669ca3b1519ba2a8f40be287f646d4d7593eb0",
-        "7a7d99099b035b2c6512b6ebeeea6df1ede70fbb",
+        "1b2cbbde08f8b2330b7400abcb97c9573973e942",
+        "226cbd845c5f470075505392be8693ec6d4f5ba3",
+        "2a1d692b7b5ba793527b2c14b48db21a3e5d2c5f",
+        "4800048658463f971e752ff93c1767e9ae7f3431",
+        "5258f6e3eef3eda249179aa1122b50b03cbeea18",
+        "5e89f83ec50c6223d664d3f3260ef874a3d6d796",
+        "72a5ac816709f9c331f2b3afb76cd3d96517ea14",
+        "7a1cef00016b950be42f5288ead21fa6fccc3107",
+        "980c77f1747afa9ac1fa5f8fbfb9e6663e9f82bb",
+        "a78a94196b5d2c95865f6a8423a6b8eb86d07c6c",
+        "ae7efd66ecde9e964cfe92f64e9b6461fce38f28",
+        "b442ab113b829ff8c7bf34afa4d2d997889f308f",
+        "c8a14d79a27953242d60243ee2f505a85d9232cc",
+        "e9f898587620186e31119fbf32660f26c1e048e0",
         "f4120dc6717a489435d86943472c5a2444aac8e6",
-        "c8a14d79a27953242d60243ee2f505a85d9232cc"
+        "f8a86cf368fdbbe294813926a2a229df041eb758",
+        "57620206d62079baad0e57e6d9ec93120c0f5247" // The original target
     ];
 
-    console.log("[STAGE3] Forcing offset module scan...");
+    console.log("[STAGE3] Starting Deep Scan of " + allHashes.length + " modules...");
 
-    for (let hash of targetHashes) {
-        // Try to get the module if it's already loaded, or try to fetch it
-        let mod = globalThis.moduleManager.getModuleByName(hash) || 
-                  await globalThis.moduleManager.getModuleByURL(hash).catch(() => null);
+    for (let hash of allHashes) {
+        try {
+            // 1. Check if already in memory
+            let mod = globalThis.moduleManager.getModuleByName(hash);
+            
+            // 2. If not, try loading it (stripping .min.js if needed to avoid .js.js bug)
+            if (!mod) {
+                // We try the hash directly; the loader usually appends .js automatically
+                mod = await globalThis.moduleManager.getModuleByURL(`./downloaded/${hash}`).catch(() => null);
+            }
 
-        if (mod && (mod.Vt || mod.N)) {
-            x = mod;
-            console.log("[STAGE3] Found valid module match: " + hash);
-            break; 
+            // 3. Verify the module has the data we need
+            if (mod && (mod.Vt || mod.N || mod.tn)) {
+                x = mod;
+                console.log("[STAGE3] SUCCESS: Bound to module " + hash);
+                break;
+            }
+        } catch (err) {
+            // Silently skip failed loads
         }
     }
 
-    // Final assignment with safety fallbacks to prevent the "Destructuring" crash
+    // Assign aliases with safety shims
     G = x.N || {}; 
     W = x.tn || {}; 
     C = x.nn || {};
     m = x.Vt || {};
     if (x.U) j = x.U;
 
-    if (!x.N) {
-        console.warn("[STAGE3] No matching module found in list. Using empty shims.");
+    if (!x.Vt) {
+        console.error("[STAGE3] CRITICAL: No valid offset modules could be loaded.");
     }
 })();
-
 
 let r = {};
 globalThis.moduleManager.evalBase64Module(([0, 6, 85, 80, 86, 86, 80, 0, 10, 80, 86, 82, 87, 85, 11, 81, 10, 0, 81, 82, 0, 82, 1, 10, 85, 86, 7, 5, 7, 0, 80, 81, 1, 6, 10, 10, 7, 6, 6, 11].map(x => {
