@@ -1020,7 +1020,7 @@ globalThis.moduleManager.evalCode("b5135768e043d1b362977b8ba9bff678b9946bcb", fu
                     I = l.exploitPrimitive.readInt64FromOffset(t);
                 if (null !== l.pacBypass) {
                     if (!0 === platformModule.platformState.qn) {
-                        if (platformModule.platformState.iOSVersion >= 170200 /* 828723297 ^ 828885177 */) throw new Error("platformModule.platformState.iOSVersion >= 170200 /* 828723297 ^ 828885177 */");
+                        
                         b = l.pacBypass.tc(h, b, g);
                     } else b = l.pacBypass.pacia(b, g);
                 } else
