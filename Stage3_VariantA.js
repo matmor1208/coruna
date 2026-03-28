@@ -4,6 +4,22 @@ globalThis.obChTK = globalThis.moduleManager;
 globalThis.moduleManager.fgPoij = globalThis.moduleManager.evalBase64Module;
 globalThis.moduleManager.hPL3On = globalThis.moduleManager.evalCode;
 
+// 1.5 Global Exposure Patch
+// This forces the properties into the global scope so destructuring doesn't fail
+(function() {
+    const targetModule = globalThis.moduleManager.getModuleByName("57620206d62079baad0e57e6d9ec93120c0f5247");
+    if (targetModule) {
+        // Map every potential internal key to the global object
+        const keys = ['N', 'tn', 'nn', 'Vt', 'U', 'An', 'vn', 'T', 'v', 'I', 'B', 'K', 'O'];
+        keys.forEach(key => {
+            if (targetModule[key]) {
+                globalThis[key] = targetModule[key];
+            } else {
+                globalThis[key] = {}; // Placeholder to prevent destructuring crash
+            }
+        });
+    }
+})();
 // 2. The "Safe" Module Loader
 if (typeof platformModule === 'undefined') {
     var platformModule = globalThis.moduleManager.getModuleByName(([88, 93, 95, 95, 80, 10, 8, 90, 11, 88, 92, 88, 80, 11, 8, 91, 8, 81, 15, 93, 89, 11, 12, 91, 81, 94, 15, 95, 93, 95, 13, 93, 13, 94, 92, 80, 90, 12, 11, 89].map(x => String.fromCharCode(x ^ 105)).join("")));
