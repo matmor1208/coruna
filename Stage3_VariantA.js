@@ -1,23 +1,20 @@
 // Variant A for iOS 17.2 is untested, might not work
-// Keep our translation layer
+// 1. Keep our translation layer
 globalThis.obChTK = globalThis.moduleManager;
 globalThis.moduleManager.fgPoij = globalThis.moduleManager.evalBase64Module;
 globalThis.moduleManager.hPL3On = globalThis.moduleManager.evalCode;
 
-// NEW: Sniff out the registered modules
-try {
-    // This is a bit advanced, but it tries to find the internal list of loaded modules
-    let modules = "Loaded Modules: ";
-    // We'll check the common IDs from your logs
-    let checkIDs = ["57620206d62079baad0e57e6d9ec93120c0f5247", "14669ca3b1519ba2a8f40be287f646d4d7593eb0"];
-    checkIDs.forEach(id => {
-        let m = globalThis.moduleManager.getModuleByName(id);
-        modules += `\n${id.slice(0,5)}...: ${m ? "✅ Found" : "❌ Missing"}`;
-    });
-    alert(modules);
-} catch (e) {
-    console.log("Sniffer failed: " + e);
-}
+// 2. The "Spy" - this will catch the exact moment it fails
+const originalGetModule = globalThis.moduleManager.getModuleByName;
+globalThis.moduleManager.getModuleByName = function(id) {
+    const module = originalGetModule.apply(this, arguments);
+    if (!module) {
+        alert("CRASH PREVENTED!\nScript asked for missing module:\n" + id);
+        // Return an empty object so it doesn't throw the 'destructure' error immediately
+        return {}; 
+    }
+    return module;
+};
 
 
 let r = {};
