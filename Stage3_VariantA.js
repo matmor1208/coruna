@@ -26,61 +26,45 @@ if (typeof platformModule === 'undefined') {
 }
 
 // 3. Define the "Destructuring" targets manually to prevent the crash
-// 3. DEEP SCAN: Loop through all known offset hashes to find a match
+// 3. FORCED MODULE SCANNER
 var x = {};
 var G = {}, W = {}, C = {}, m = {}, j = function(t){return BigInt(t)};
 
-async function findValidOffsetModule() {
-    const hashes = [
-        "1334417664270db20af705f422878c53c8378203",
-        "1b2cbbde08f8b2330b7400abcb97c9573973e942",
-        "226cbd845c5f470075505392be8693ec6d4f5ba3",
-        "2a1d692b7b5ba793527b2c14b48db21a3e5d2c5f",
-        "4800048658463f971e752ff93c1767e9ae7f3431",
-        "5258f6e3eef3eda249179aa1122b50b03cbeea18",
-        "5e89f83ec50c6223d664d3f3260ef874a3d6d796",
-        "72a5ac816709f9c331f2b3afb76cd3d96517ea14",
-        "7a1cef00016b950be42f5288ead21fa6fccc3107",
-        "980c77f1747afa9ac1fa5f8fbfb9e6663e9f82bb",
-        "a78a94196b5d2c95865f6a8423a6b8eb86d07c6c",
-        "ae7efd66ecde9e964cfe92f64e9b6461fce38f28",
-        "b442ab113b829ff8c7bf34afa4d2d997889f308f",
-        "c8a14d79a27953242d60243ee2f505a85d9232cc",
+(async function() {
+    // List of all decrypted hashes you found in your repo
+    const targetHashes = [
         "e9f898587620186e31119fbf32660f26c1e048e0",
+        "1334417664270db20af705f422878c53c8378203",
+        "57620206d62079baad0e57e6d9ec93120c0f5247",
+        "14669ca3b1519ba2a8f40be287f646d4d7593eb0",
+        "7a7d99099b035b2c6512b6ebeeea6df1ede70fbb",
         "f4120dc6717a489435d86943472c5a2444aac8e6",
-        "f8a86cf368fdbbe294813926a2a229df041eb758"
+        "c8a14d79a27953242d60243ee2f505a85d9232cc"
     ];
 
-    for (const hash of hashes) {
-        try {
-            // Try loading from the 'downloaded' folder
-            let target = await globalThis.moduleManager.getModuleByURL(`./downloaded/${hash}.min.js`);
-            
-            // Check if this module has the required 'Vt' property
-            if (target && target.Vt) {
-                console.log(`[CORUNA] Success! Found matching module: ${hash}`);
-                return target;
-            }
-        } catch (e) {
-            // Continue to next hash if this one fails to load
-            continue;
+    console.log("[STAGE3] Forcing offset module scan...");
+
+    for (let hash of targetHashes) {
+        // Try to get the module if it's already loaded, or try to fetch it
+        let mod = globalThis.moduleManager.getModuleByName(hash) || 
+                  await globalThis.moduleManager.getModuleByURL(hash).catch(() => null);
+
+        if (mod && (mod.Vt || mod.N)) {
+            x = mod;
+            console.log("[STAGE3] Found valid module match: " + hash);
+            break; 
         }
     }
-    return null;
-}
 
-// Execute the scan
-(async () => {
-    const foundModule = await findValidOffsetModule();
-    if (foundModule) {
-        x = foundModule;
-        G = x.N || {}; 
-        W = x.tn || {}; 
-        C = x.nn || {};
-        m = x.Vt || {};
-        if (x.U) j = x.U;
-    } else {
-        console.error("[CORUNA] Failed to find any valid offset module in /downloaded/");
+    // Final assignment with safety fallbacks to prevent the "Destructuring" crash
+    G = x.N || {}; 
+    W = x.tn || {}; 
+    C = x.nn || {};
+    m = x.Vt || {};
+    if (x.U) j = x.U;
+
+    if (!x.N) {
+        console.warn("[STAGE3] No matching module found in list. Using empty shims.");
     }
 })();
 
