@@ -26,26 +26,63 @@ if (typeof platformModule === 'undefined') {
 }
 
 // 3. Define the "Destructuring" targets manually to prevent the crash
-// 3. AUTO-DISCOVERY: Find the helper module by its content, not its hash
+// 3. DEEP SCAN: Loop through all known offset hashes to find a match
 var x = {};
 var G = {}, W = {}, C = {}, m = {}, j = function(t){return BigInt(t)};
 
-// We look for any module that contains the 'Vt' property (usually the address math table)
-const allModules = globalThis.moduleManager.getModules ? globalThis.moduleManager.getModules() : [];
-const helperModule = allModules.find(mod => mod && mod.Vt) || 
-                     globalThis.moduleManager.getModuleByName("e9f898587620186e31119fbf32660f26c1e048e0"); // Fallback to your closest hash
+async function findValidOffsetModule() {
+    const hashes = [
+        "1334417664270db20af705f422878c53c8378203",
+        "1b2cbbde08f8b2330b7400abcb97c9573973e942",
+        "226cbd845c5f470075505392be8693ec6d4f5ba3",
+        "2a1d692b7b5ba793527b2c14b48db21a3e5d2c5f",
+        "4800048658463f971e752ff93c1767e9ae7f3431",
+        "5258f6e3eef3eda249179aa1122b50b03cbeea18",
+        "5e89f83ec50c6223d664d3f3260ef874a3d6d796",
+        "72a5ac816709f9c331f2b3afb76cd3d96517ea14",
+        "7a1cef00016b950be42f5288ead21fa6fccc3107",
+        "980c77f1747afa9ac1fa5f8fbfb9e6663e9f82bb",
+        "a78a94196b5d2c95865f6a8423a6b8eb86d07c6c",
+        "ae7efd66ecde9e964cfe92f64e9b6461fce38f28",
+        "b442ab113b829ff8c7bf34afa4d2d997889f308f",
+        "c8a14d79a27953242d60243ee2f505a85d9232cc",
+        "e9f898587620186e31119fbf32660f26c1e048e0",
+        "f4120dc6717a489435d86943472c5a2444aac8e6",
+        "f8a86cf368fdbbe294813926a2a229df041eb758"
+    ];
 
-if (helperModule) {
-    x = helperModule;
-    G = x.N || {}; 
-    W = x.tn || {}; 
-    C = x.nn || {};
-    m = x.Vt || {};
-    if (x.U) j = x.U;
-    console.log("[CORUNA] Successfully linked helper module.");
-} else {
-    console.error("[CORUNA] Critical Failure: No compatible offset module found in repo.");
+    for (const hash of hashes) {
+        try {
+            // Try loading from the 'downloaded' folder
+            let target = await globalThis.moduleManager.getModuleByURL(`./downloaded/${hash}.min.js`);
+            
+            // Check if this module has the required 'Vt' property
+            if (target && target.Vt) {
+                console.log(`[CORUNA] Success! Found matching module: ${hash}`);
+                return target;
+            }
+        } catch (e) {
+            // Continue to next hash if this one fails to load
+            continue;
+        }
+    }
+    return null;
 }
+
+// Execute the scan
+(async () => {
+    const foundModule = await findValidOffsetModule();
+    if (foundModule) {
+        x = foundModule;
+        G = x.N || {}; 
+        W = x.tn || {}; 
+        C = x.nn || {};
+        m = x.Vt || {};
+        if (x.U) j = x.U;
+    } else {
+        console.error("[CORUNA] Failed to find any valid offset module in /downloaded/");
+    }
+})();
 
 
 let r = {};
